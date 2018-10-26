@@ -4,6 +4,8 @@ import reactor.core.publisher.Flux;
 
 import java.time.Duration;
 
+import static ru.yusdm.reactprogramming.training.reactor.operators.CommonUtils.sleepSecs;
+
 public class FlatMapConcatMap {
 
     private static final Flux<String> RUS_CITIES = Flux.just("Spb", "Msc");
@@ -12,8 +14,11 @@ public class FlatMapConcatMap {
 
 
     public static void main(String args[]) {
-        testFlatMap_1();
+        // testFlatMap_1();
         //  testFlatMap_2();
+
+        //testFlatMapSequential();
+        //testFlatMapWithError();
     }
 
     /**
@@ -46,6 +51,8 @@ public class FlatMapConcatMap {
     }
 
     /**
+     * Order is not defined, so flatMap play like = map + merge
+     * <p>
      * parallel-2 Minsk
      * parallel-3 Kiev
      * parallel-4 Odessa
@@ -58,13 +65,28 @@ public class FlatMapConcatMap {
                 .subscribe(city -> {
                     System.out.println(Thread.currentThread().getName() + " " + city);
                 });
-
-        try {
-            Thread.sleep(3000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        sleepSecs(30);
     }
+
+    /**
+     * Order is defined, so flatMap play like = map + concat
+     * <p>
+     * parallel-1 Spb
+     * parallel-4 Msc
+     * parallel-4 Minsk
+     * parallel-3 Kiev
+     * parallel-5 Odessa
+     */
+    private static void testFlatMapSequential() {
+        Flux<String> countries = Flux.just("Russia", "Belarus", "Ukraine");
+        countries.flatMapSequential(FlatMapConcatMap::getCitiesByCountry_2)
+                .subscribe(city -> {
+                    System.out.println(Thread.currentThread().getName() + " " + city);
+                });
+
+        sleepSecs(30);
+    }
+
 
     private static Flux<String> getCitiesByCountry_2(String country) {
         switch (country) {
@@ -72,12 +94,25 @@ public class FlatMapConcatMap {
                 return RUS_CITIES.delayElements(Duration.ofMillis(1000));
             }
             case "Belarus": {
-                return BLR_CITIES.delayElements(Duration.ofMillis(15));
+                return BLR_CITIES.delayElements(Duration.ofMillis(150));
             }
             default: {
-                return UKR_CITIES.delayElements(Duration.ofMillis(25));
+                return UKR_CITIES.delayElements(Duration.ofMillis(2500));
             }
         }
+    }
+
+    private static void testFlatMapWithError() {
+        Flux<String> countries = Flux.just("Russia", "Belarus", "Ukraine");
+        countries.flatMapSequential(FlatMapConcatMap::getCitiesByCountry_2)
+                .subscribe(city -> {
+                    System.out.println(Thread.currentThread().getName() + " " + city);
+                    if (city.equals("Msc") || city.equals("Kiev")) {
+                        throw new RuntimeException("Bad city '" + city + "'");
+                    }
+                });
+
+        sleepSecs(30);
     }
 
 }

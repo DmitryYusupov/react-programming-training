@@ -7,19 +7,6 @@ import java.util.Arrays;
 public class ReduceStreamElems {
 
     public static void main(String[] args) {
-
-        int bucketSize = 5; // (1)
-        Flux.range(1, 10) // (2)
-                .index() // (3)
-                .scan( // (4)
-                        new int[bucketSize], // (4.1)
-                        (acc, elem) -> { //
-                            acc[(int)(elem.getT1() % bucketSize)] = elem.getT2(); // (4.2)
-                            return acc; // (4.3)
-                        })
-                .skip(bucketSize) // (5)
-                .map(array -> Arrays.stream(array).sum() * 1.0 / bucketSize) // (6)
-                .subscribe(av -> System.out.println("Running average: " +  av)); // (7)
         //testScan();
         //testReduce();
         //   sort();
