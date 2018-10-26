@@ -1,0 +1,3 @@
+rootProject.name = 'react-programming-training'
+include 'reactor-operators'
+
